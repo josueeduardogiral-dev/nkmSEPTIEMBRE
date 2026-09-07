@@ -8,7 +8,7 @@ Aplicación web para el registro de asistencia de empleados con soporte para exp
   - Eventos únicos por día para tipos: "Entrada", "Inicio Almuerzo", "Fin Almuerzo", "Salida".
   - Bloqueo por dispositivo: un mismo dispositivo (fingerprint) no puede registrar para dos empleados distintos el mismo día.
 - Exportación a Excel:
-  - Reporte del mes actual, con una hoja por empleado y bloques para las semanas 1–4 (`/login/descargar/asistencia`).
+  - Reporte del mes seleccionado por el administrador, con una hoja por empleado y bloques para las semanas 1–4 (`/login/descargar/asistencia`).
   - Resumen diario por empleado con cálculo de tiempos de almuerzo, comisión, permisos y horas trabajadas (`/login/descargar/resumen/`).
 - Panel de login para personal (usa autenticación de Django) y acceso a página de descargas.
 - Población rápida de datos de ejemplo mediante `cargar_empleados.py`.

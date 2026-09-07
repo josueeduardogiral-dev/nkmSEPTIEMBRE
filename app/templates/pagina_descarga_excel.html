@@ -23,9 +23,20 @@
           <p class="helper-text">Solo usuarios administradores pueden acceder a esta página.</p>
 
           <div class="d-grid gap-3 mt-4">
-            <a href="{% url 'descargar_excel' %}" class="btn btn-success btn-lg">
-              Descargar Excel mensual por empleado y semanas
-            </a>
+            <form action="{% url 'descargar_excel' %}" method="get" class="monthly-report-form">
+              <label for="mes-reporte" class="form-label">Mes del reporte</label>
+              <input
+                type="month"
+                id="mes-reporte"
+                name="mes"
+                class="form-control form-control-lg"
+                value="{{ mes_actual }}"
+                required
+              >
+              <button type="submit" class="btn btn-success btn-lg w-100 mt-3">
+                Descargar Excel mensual por empleado y semanas 1 a 4
+              </button>
+            </form>
             <a href="{% url 'resumen_excel' %}" class="btn btn-success btn-lg">
               Descargar Excel de Resumen de Asistencias
             </a>

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -35,7 +37,9 @@ def pagina_descarga_excel(request):
     Página para descargar reportes de Excel.
     Solo accesible para usuarios staff.
     """
-    return render(request, 'pagina_descarga_excel.html')
+    return render(request, 'pagina_descarga_excel.html', {
+        'mes_actual': timezone.localdate().strftime('%Y-%m'),
+    })
 
 
 @user_passes_test(es_staff)
@@ -236,9 +240,20 @@ def _nombre_hoja_empleado(empleado, usados):
 
 @user_passes_test(es_staff)
 def exportar_reporte_mensual_empleados(request):
-    """Genera marcaciones del mes actual por empleado y semana laboral."""
-    hoy = timezone.localdate()
-    rangos = ReporteService.rangos_semanales_mes(hoy)
+    """Genera las marcaciones del mes seleccionado por empleado y semanas 1 a 4."""
+    mes_solicitado = getattr(request, 'GET', {}).get('mes', '').strip()
+    if mes_solicitado:
+        try:
+            mes_reporte = datetime.strptime(mes_solicitado, '%Y-%m').date()
+        except ValueError:
+            return HttpResponse(
+                'Mes inválido. Seleccione un mes con el formato AAAA-MM.',
+                status=400,
+            )
+    else:
+        mes_reporte = timezone.localdate().replace(day=1)
+
+    rangos = ReporteService.rangos_semanales_mes(mes_reporte)
     inicio_mes, fin_mes = rangos[0][1], rangos[-1][2]
     empleados = list(Empleado.objects.order_by('apellidos', 'nombres'))
     registros = RegistroAsistencia.objects.filter(
@@ -325,7 +340,7 @@ def exportar_reporte_mensual_empleados(request):
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    filename = f"reporte_mensual_empleados_{hoy.strftime('%Y_%m')}.xlsx"
+    filename = f"reporte_mensual_empleados_{mes_reporte.strftime('%Y_%m')}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     wb.save(response)
     return response

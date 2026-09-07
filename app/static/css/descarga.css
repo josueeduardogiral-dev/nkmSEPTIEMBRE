@@ -60,6 +60,28 @@ p {
   filter: brightness(1.05);
 }
 
+.monthly-report-form {
+  padding: 1rem;
+  border: 1px solid rgba(15, 30, 82, 0.18);
+  border-radius: 12px;
+  background: #f8fafc;
+  text-align: left;
+}
+
+.monthly-report-form .form-label {
+  color: var(--brand-primary);
+  font-weight: 700;
+}
+
+.monthly-report-form .form-control {
+  border-color: rgba(15, 30, 82, 0.35);
+}
+
+.monthly-report-form .form-control:focus {
+  border-color: var(--brand-primary-dark);
+  box-shadow: 0 0 0 0.2rem rgba(31, 59, 141, 0.16);
+}
+
 @media (max-width: 576px) {
   .card {
     padding: 1.5rem 1rem;
