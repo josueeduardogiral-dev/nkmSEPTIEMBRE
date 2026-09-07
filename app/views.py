@@ -1,3 +1,4 @@
+import calendar
 from datetime import datetime
 
 from django.shortcuts import render, get_object_or_404, redirect
@@ -240,7 +241,7 @@ def _nombre_hoja_empleado(empleado, usados):
 
 @user_passes_test(es_staff)
 def exportar_reporte_mensual_empleados(request):
-    """Genera las marcaciones del mes seleccionado por empleado y semanas 1 a 4."""
+    """Genera las marcaciones de todo el mes de 2026 por empleado y semana."""
     mes_solicitado = getattr(request, 'GET', {}).get('mes', '').strip()
     if mes_solicitado:
         try:
@@ -253,8 +254,14 @@ def exportar_reporte_mensual_empleados(request):
     else:
         mes_reporte = timezone.localdate().replace(day=1)
 
+    if mes_reporte.year != 2026:
+        return HttpResponse('Seleccione un mes del año 2026.', status=400)
+
     rangos = ReporteService.rangos_semanales_mes(mes_reporte)
-    inicio_mes, fin_mes = rangos[0][1], rangos[-1][2]
+    inicio_mes = mes_reporte.replace(day=1)
+    fin_mes = mes_reporte.replace(
+        day=calendar.monthrange(mes_reporte.year, mes_reporte.month)[1]
+    )
     empleados = list(Empleado.objects.order_by('apellidos', 'nombres'))
     registros = RegistroAsistencia.objects.filter(
         fecha_registro__range=(inicio_mes, fin_mes)

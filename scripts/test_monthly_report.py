@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, time
 import os
 from pathlib import Path
 import sys
@@ -29,7 +29,7 @@ from app.views import (
 
 
 class MonthlyReportTests(unittest.TestCase):
-    def test_weeks_are_four_monday_to_friday_blocks(self):
+    def test_august_includes_fifth_week_and_day_31(self):
         ranges = ReporteService.rangos_semanales_mes(date(2026, 8, 31))
         self.assertEqual(
             ranges,
@@ -38,12 +38,14 @@ class MonthlyReportTests(unittest.TestCase):
                 (2, date(2026, 8, 10), date(2026, 8, 14)),
                 (3, date(2026, 8, 17), date(2026, 8, 21)),
                 (4, date(2026, 8, 24), date(2026, 8, 28)),
+                (5, date(2026, 8, 31), date(2026, 8, 31)),
             ],
         )
 
-    def test_february_still_uses_four_work_weeks(self):
+    def test_partial_weeks_stay_inside_selected_month(self):
         ranges = ReporteService.rangos_semanales_mes(date(2024, 2, 10))
-        self.assertEqual(ranges[-1], (4, date(2024, 2, 26), date(2024, 2, 29)))
+        self.assertEqual(ranges[0], (1, date(2024, 2, 1), date(2024, 2, 2)))
+        self.assertEqual(ranges[-1], (5, date(2024, 2, 26), date(2024, 2, 29)))
 
     def test_excel_sheet_names_are_valid_and_unique(self):
         empleado = type('Empleado', (), {
@@ -76,9 +78,15 @@ class MonthlyReportTests(unittest.TestCase):
             'nombre_completo': 'Empleado de prueba',
             'pk': 7,
         })()
+        registro_31 = type('Registro', (), {
+            'empleado_id': 7,
+            'fecha_registro': date(2026, 8, 31),
+            'hora_registro': time(9, 0),
+            'tipo': type('Tipo', (), {'nombre_asistencia': 'Entrada'})(),
+        })()
         empleados.order_by.return_value = [empleado]
         queryset = registros.filter.return_value.select_related.return_value.order_by.return_value
-        queryset.__iter__.return_value = iter([])
+        queryset.__iter__.return_value = iter([registro_31])
         request = type('Request', (), {'GET': {'mes': '2026-08'}})()
 
         response = exportar_reporte_mensual_empleados.__wrapped__(request)
@@ -90,11 +98,13 @@ class MonthlyReportTests(unittest.TestCase):
         ]
 
         registros.filter.assert_called_once_with(
-            fecha_registro__range=(date(2026, 8, 3), date(2026, 8, 28))
+            fecha_registro__range=(date(2026, 8, 1), date(2026, 8, 31))
         )
-        self.assertEqual(len(week_labels), 4)
+        self.assertEqual(len(week_labels), 5)
         self.assertEqual(week_labels[0], 'Semana 1 (03/08/2026 - 07/08/2026)')
-        self.assertEqual(week_labels[-1], 'Semana 4 (24/08/2026 - 28/08/2026)')
+        self.assertEqual(week_labels[-1], 'Semana 5 (31/08/2026 - 31/08/2026)')
+        values = list(worksheet.values)
+        self.assertTrue(any(row[0] == '31/08/2026' and row[1] == '09:00' for row in values))
         self.assertIn('reporte_mensual_empleados_2026_08.xlsx', response['Content-Disposition'])
 
     def test_invalid_month_is_rejected(self):
@@ -102,6 +112,12 @@ class MonthlyReportTests(unittest.TestCase):
         response = exportar_reporte_mensual_empleados.__wrapped__(request)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Mes inválido', response.content.decode('utf-8'))
+
+    def test_month_outside_2026_is_rejected(self):
+        request = type('Request', (), {'GET': {'mes': '2025-08'}})()
+        response = exportar_reporte_mensual_empleados.__wrapped__(request)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('año 2026', response.content.decode('utf-8'))
 
     def test_existing_attendance_download_uses_monthly_report(self):
         url = reverse('descargar_excel')
@@ -115,7 +131,9 @@ class MonthlyReportTests(unittest.TestCase):
         html = response.content.decode('utf-8')
         self.assertIn('name="mes"', html)
         self.assertIn('value="2026-09"', html)
-        self.assertIn('semanas 1 a 4', html)
+        self.assertIn('todas las semanas', html)
+        self.assertIn('min="2026-01"', html)
+        self.assertIn('max="2026-12"', html)
         self.assertIn(reverse('descargar_excel'), html)
 
 

@@ -31,10 +31,12 @@
                 name="mes"
                 class="form-control form-control-lg"
                 value="{{ mes_actual }}"
+                min="2026-01"
+                max="2026-12"
                 required
               >
               <button type="submit" class="btn btn-success btn-lg w-100 mt-3">
-                Descargar Excel mensual por empleado y semanas 1 a 4
+                Descargar Excel mensual por empleado y todas las semanas
               </button>
             </form>
             <a href="{% url 'resumen_excel' %}" class="btn btn-success btn-lg">

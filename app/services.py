@@ -134,20 +134,23 @@ class ReporteService:
 
     @staticmethod
     def rangos_semanales_mes(fecha):
-        """Devuelve las primeras cuatro semanas laborales (lunes a viernes)."""
+        """Devuelve todas las semanas laborales que tengan días dentro del mes."""
         primer_dia = date(fecha.year, fecha.month, 1)
-        primer_lunes = primer_dia + timedelta(days=(7 - primer_dia.weekday()) % 7)
         ultimo_dia = date(
             fecha.year, fecha.month, calendar.monthrange(fecha.year, fecha.month)[1]
         )
-        return [
-            (
-                numero,
-                primer_lunes + timedelta(weeks=numero - 1),
-                min(primer_lunes + timedelta(weeks=numero - 1, days=4), ultimo_dia),
-            )
-            for numero in range(1, 5)
-        ]
+        rangos = []
+        inicio = primer_dia
+
+        while inicio <= ultimo_dia:
+            if inicio.weekday() >= 5:
+                inicio += timedelta(days=7 - inicio.weekday())
+                continue
+            fin = min(inicio + timedelta(days=4 - inicio.weekday()), ultimo_dia)
+            rangos.append((len(rangos) + 1, inicio, fin))
+            inicio = fin + timedelta(days=1)
+
+        return rangos
     
     @staticmethod
     def delta(t1, t2):
