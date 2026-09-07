@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Asistencia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/formulario.css' %}">
+</head>
+<body>
+  <div class="container px-3">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-10 col-lg-7 col-xl-6">
+<div class="card p-4">
+          <div class="brand-bar mb-2"><span class="brand-pill"><img src="{% static 'img/logo-calidad.svg' %}" alt="Nakama">NAKAMA</span></div>
+          <div class="card-body mt-3">
+            <form method="POST">
+              {% csrf_token %}
+
+              <div class="mb-3">
+                <label class="form-label">Empleado:</label>
+                <select class="form-select select2" name="empleado" required>
+                  <option value="">-- Selecciona un empleado --</option>
+                  {% for emp in empleados %}
+                    <option value="{{ emp.id_empleado }}">{{ emp.nombres }} {{ emp.apellidos }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">Tipo de Asistencia:</label>
+                <select name="tipo_evento" id="tipo_evento" class="form-select" required>
+                  <option value="">-- Selecciona un tipo --</option>
+                  {% for tipo in tipos_evento %}
+                    <option value="{{ tipo.id_tipo }}">{{ tipo.nombre_asistencia }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="mb-3" id="descripcion_group" style="display: none;">
+                <label class="form-label">Descripción adicional:</label>
+                <input type="text" name="descripcion" class="form-control" maxlength="50">
+              </div>
+
+              <input type="hidden" name="fingerprint" id="fingerprint_input">
+
+              <!-- <div class="mb-3">
+                <label class="form-label">Ubicación actual:</label>
+                <p id="info_ubicacion" class="form-control" style="height: auto;">Esperando ubicación...</p>
+              </div> -->
+
+              <div class="d-grid">
+                <button type="submit" class="btn btn-success btn-lg">Registrar Asistencia</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+
+
+
+<script>
+  const EMPRESA_LAT = -12.080257055918374;
+  const EMPRESA_LON = -76.99778307088776;
+  const RADIO_METROS = 500;
+
+  document.addEventListener("DOMContentLoaded", function () {
+    $('.select2').select2({ width: '100%' });
+
+    const form = document.querySelector("form");
+    const fingerprintInput = document.getElementById("fingerprint_input");
+    const tipoSelect = document.getElementById('tipo_evento');
+    const descripcionGroup = document.getElementById('descripcion_group');
+    let fingerprintListo = false;
+
+    // FingerprintJS
+    FingerprintJS.load().then(fp => {
+      fp.get().then(result => {
+        const visitorId = result.visitorId;
+        fingerprintInput.value = visitorId;
+        fingerprintListo = true;
+      });
+    });
+
+    // Mostrar/ocultar campo descripción según tipo de asistencia
+    tipoSelect.addEventListener('change', function () {
+      const textoSeleccionado = tipoSelect.options[tipoSelect.selectedIndex].text;
+      const mostrar = textoSeleccionado === 'Entrada por otros' || textoSeleccionado === 'Salida por otros';
+      descripcionGroup.style.display = mostrar ? 'block' : 'none';
+    });
+
+    // Envío del formulario con validación de fingerprint y ubicación
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Si no hay fingerprint, continuar sin bloquear; el backend lo maneja como opcional
+      // if (!fingerprintListo || !fingerprintInput.value) {
+      //   alert("Fingerprint aún no cargado. Espera un momento...");
+      //   return;
+      // }
+
+      if (!navigator.geolocation) {
+        alert("Tu navegador no soporta geolocalización.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
+          const distancia = calcularDistancia(lat, lon, EMPRESA_LAT, EMPRESA_LON);
+
+          // document.getElementById("info_ubicacion").innerText =
+          //   `Latitud: ${lat.toFixed(6)}\nLongitud: ${lon.toFixed(6)}\nDistancia: ${Math.round(distancia)} metros`;
+
+          if (distancia > RADIO_METROS) {
+            alert("Debes estar dentro del área de la empresa para registrar asistencia.");
+            return;
+          }
+
+          form.submit();
+        },
+        function () {
+          alert("No se pudo obtener tu ubicación.");
+        }
+      );
+    });
+
+    // Función para calcular distancia en metros entre dos coordenadas
+    function calcularDistancia(lat1, lon1, lat2, lon2) {
+      const R = 6371000, rad = Math.PI / 180;
+      const dLat = (lat2 - lat1) * rad;
+      const dLon = (lon2 - lon1) * rad;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLon/2)**2;
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+  });
+</script>
+
+
+
+</body>
+</html>

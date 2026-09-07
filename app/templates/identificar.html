@@ -1,0 +1,164 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de asistencia</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/formulario.css' %}">
+</head>
+<body>
+  <div class="container px-3">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-10 col-lg-7 col-xl-6">
+<div class="card p-4 mt-4 text-center">
+<div class="brand-bar"><span class="brand-pill"><img src="{% static 'img/logo-calidad.svg' %}" alt="Nakama">NAKAMA</span></div>
+          <div class="card-body pt-0">
+            <small id="estado" class="text-muted d-block mb-3">Selecciona tu nombre para continuar.</small>
+
+            <!-- Selección de empleado: oculta por defecto; se muestra solo si no te reconoce o eliges "No soy yo" -->
+            <form id="form-vincular" class="text-start" style="display: none;">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="form-label">Empleado:</label>
+                <select name="empleado_id" id="empleado_id" class="form-select" required>
+                  <option value=""></option>
+                  {% for emp in empleados %}
+                    <option value="{{ emp.id_empleado }}">{{ emp.apellidos }}, {{ emp.nombres }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="d-grid">
+                <button type="submit" class="btn btn-entrar btn-lg">ENTRAR</button>
+              </div>
+            </form>
+
+            <div class="mt-3">
+              <a href="{% url 'pagina_principal' %}" class="btn btn-outline-secondary btn-sm">← Volver al inicio</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+  <script>
+    let visitorId = null;
+    // Obtener token CSRF desde cookie
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+      return null;
+    }
+
+    function setEstado(msg, tipo = 'muted') {
+      const el = document.getElementById('estado');
+      el.className = `text-${tipo} d-block mb-2`;
+      el.textContent = msg;
+    }
+
+    function mostrarFormulario() {
+      document.getElementById('form-vincular').style.display = 'block';
+    }
+
+    // Detección sin redirección automática: si ya está vinculado, ofrecer confirmación
+    async function identificar() {
+      try {
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        visitorId = result.visitorId;
+
+        const res = await fetch('{% url "api_identificar_por_fingerprint" %}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+          body: JSON.stringify({ fingerprint: visitorId })
+        });
+        const data = await res.json();
+        if (data.success && data.empleado && data.empleado.id) {
+          setEstado(`¿Eres ${data.empleado.nombre_completo}?`, 'info');
+          const cont = document.createElement('div');
+          cont.className = 'd-flex gap-2 justify-content-center mb-3';
+          const btnYes = document.createElement('a');
+          btnYes.className = 'btn btn-primary btn-sm';
+          btnYes.textContent = 'Sí, entrar';
+          btnYes.href = `/auto/empleado/${data.empleado.id}/`;
+          const btnNo = document.createElement('button');
+          btnNo.className = 'btn btn-outline-warning btn-sm';
+          btnNo.textContent = 'No soy yo';
+          btnNo.onclick = async () => { await desvincularYMostrar(); cont.remove(); };
+          cont.appendChild(btnYes); cont.appendChild(btnNo);
+          document.getElementById('estado').after(cont);
+          // Mantener el formulario oculto hasta confirmar "No soy yo"
+          return;
+        }
+      } catch(_) { /* ignorar */ }
+      setEstado('Selecciona tu nombre para continuar.', 'secondary');
+      mostrarFormulario();
+    }
+
+    async function desvincularYMostrar(){
+      try{
+        await fetch('{% url "api_desvincular_fingerprint" %}',{
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', 'X-CSRFToken': getCookie('csrftoken') || '' },
+          body: JSON.stringify({ fingerprint: visitorId })
+        });
+      }catch(_){ }
+      setEstado('Selecciona tu nombre para continuar.', 'secondary');
+      mostrarFormulario();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      identificar();
+
+      // Enter para enviar
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && document.getElementById('form-vincular').style.display !== 'none') {
+          e.preventDefault();
+          document.getElementById('form-vincular').requestSubmit();
+        }
+      });
+
+      document.getElementById('form-vincular').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const empleadoId = document.getElementById('empleado_id').value;
+        if (!empleadoId) return;
+
+        // Si no tenemos fingerprint (bloqueadores, red, etc.), continuar sin vincular
+        if (!visitorId) {
+          setEstado('Continuando sin vincular dispositivo...', 'secondary');
+          window.location.href = `/auto/empleado/${empleadoId}/`;
+          return;
+        }
+
+        try {
+          const res = await fetch('{% url "api_vincular_fingerprint" %}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken') || ''
+            },
+            body: JSON.stringify({ empleado_id: empleadoId, fingerprint: visitorId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            setEstado('Equipo guardado. Entrando...', 'success');
+            setTimeout(() => window.location.href = `/auto/empleado/${empleadoId}/`, 500);
+          } else {
+            setEstado('No se pudo vincular: ' + (data.error || 'Error desconocido'), 'danger');
+          }
+        } catch (e) {
+          // Si la API falla, continuar al formulario sin vincular
+          window.location.href = `/auto/empleado/${empleadoId}/`;
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+:root{
+  /* Paleta corporativa: azul, blanco, amarillo y plomo */
+  --brand-primary:#0f1e52;
+  --brand-primary-dark:#1f3b8d;
+  --brand-accent:#f5b301;
+  --brand-accent-dark:#d99c00;
+  --black:#1f2937; /* plomo oscuro */
+  --white:#ffffff;
+}
+
+body {
+  background:
+    radial-gradient(900px 500px at 120% 120%, rgba(31,59,141,.35), transparent 60%),
+    linear-gradient(135deg, var(--black) 0%, #0b1430 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  color: #0f172a;
+}
+
+.login-card {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 400px;
+  box-sizing: border-box;
+}
+
+.login-card h2 {
+  margin-bottom: 30px;
+  color: var(--brand-primary-dark);
+  font-weight: bold;
+  text-align: center;
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--brand-accent), var(--brand-accent-dark));
+  color: #111827;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: bold;
+  transition: filter 0.2s;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.05);
+}
+
+@media (max-width: 576px) {
+  .login-card {
+    padding: 30px 20px;
+  }
+
+  .form-label,
+  .form-control {
+    font-size: 14px;
+  }
+
+  .btn-primary {
+    padding: 10px;
+    font-size: 16px;
+  }
+}

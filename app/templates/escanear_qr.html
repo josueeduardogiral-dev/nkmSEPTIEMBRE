@@ -1,0 +1,169 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escanear Código QR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="stylesheet" href="{% static 'css/formulario.css' %}">
+</head>
+<body>
+  <div class="container px-3" style="min-height:100vh; display:flex; align-items:center; justify-content:center;">
+    <div class="row justify-content-center w-100">
+      <div class="col-12 col-md-9 col-lg-7">
+        <div class="card hero-card p-4">
+          <span class="glow-line gl1"></span>
+          <span class="glow-line gl2"></span>
+<div class="brand-bar mb-2"><span class="brand-pill"><img src="{% static 'img/logo-calidad.svg' %}" alt="Nakama">NAKAMA • QR</span></div>
+          <div class="mb-3 text-center">
+            <span class="header-chip">📱 Escanear Código QR</span>
+          </div>
+          <div class="card-body pt-0">
+            <div class="text-center mb-4">
+              <div class="qr-scanner-container">
+                <video id="qr-video" width="100%" height="300" style="border: 2px solid #28a745; border-radius: 10px;"></video>
+                <canvas id="qr-canvas" style="display: none;"></canvas>
+              </div>
+              <p class="mt-3 text-muted">Apunta tu cámara al código QR de tu empleado</p>
+            </div>
+
+            <div id="resultado-scan" class="alert" style="display: none;"></div>
+
+            <div class="d-grid gap-2">
+              <button id="iniciar-scan" class="btn btn-success btn-lg">🎥 Iniciar Escaneo</button>
+              <button id="detener-scan" class="btn btn-danger btn-lg" style="display: none;">⏹️ Detener Escaneo</button>
+              <a href="{% url 'pagina_principal' %}" class="btn btn-outline-secondary">← Volver al Inicio</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  
+  <script>
+        let video, canvas, context;
+        let scanning = false;
+        let stream;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            video = document.getElementById('qr-video');
+            canvas = document.getElementById('qr-canvas');
+            context = canvas.getContext('2d');
+            
+            const iniciarBtn = document.getElementById('iniciar-scan');
+            const detenerBtn = document.getElementById('detener-scan');
+            const resultadoDiv = document.getElementById('resultado-scan');
+
+            iniciarBtn.addEventListener('click', iniciarEscaneo);
+            detenerBtn.addEventListener('click', detenerEscaneo);
+
+            function iniciarEscaneo() {
+                navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment' // Usar cámara trasera en móviles
+                    } 
+                })
+                .then(function(mediaStream) {
+                    stream = mediaStream;
+                    video.srcObject = stream;
+                    video.play();
+                    
+                    iniciarBtn.style.display = 'none';
+                    detenerBtn.style.display = 'block';
+                    scanning = true;
+                    
+                    escanearQR();
+                })
+                .catch(function(err) {
+                    mostrarResultado('Error al acceder a la cámara: ' + err.message, 'danger');
+                });
+            }
+
+            function detenerEscaneo() {
+                scanning = false;
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                
+                iniciarBtn.style.display = 'block';
+                detenerBtn.style.display = 'none';
+                video.srcObject = null;
+            }
+
+            function escanearQR() {
+                if (!scanning) return;
+
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.height = video.videoHeight;
+                    canvas.width = video.videoWidth;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code) {
+                        detenerEscaneo();
+                        procesarCodigoQR(code.data);
+                    }
+                }
+                
+                requestAnimationFrame(escanearQR);
+            }
+
+            function procesarCodigoQR(codigo) {
+                mostrarResultado('Código QR detectado: ' + codigo, 'info');
+                
+                // Extraer código QR de la URL
+                const match = codigo.match(/\/qr\/([^\/]+)\//);
+                if (match) {
+                    const codigoQR = match[1];
+                    buscarEmpleado(codigoQR);
+                } else {
+                    mostrarResultado('Código QR no válido', 'danger');
+                }
+            }
+
+            function buscarEmpleado(codigoQR) {
+                fetch('{% url "api_buscar_empleado_qr" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ codigo_qr: codigoQR })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        mostrarResultado(
+                            `Empleado encontrado: ${data.empleado.nombre_completo}`, 
+                            'success'
+                        );
+                        // Redirigir al formulario de asistencia
+                        setTimeout(() => {
+                            window.location.href = `/qr/${codigoQR}/`;
+                        }, 1500);
+                    } else {
+                        mostrarResultado('Error: ' + data.error, 'danger');
+                    }
+                })
+                .catch(error => {
+                    mostrarResultado('Error de conexión: ' + error.message, 'danger');
+                });
+            }
+
+            function mostrarResultado(mensaje, tipo) {
+                resultadoDiv.className = `alert alert-${tipo}`;
+                resultadoDiv.textContent = mensaje;
+                resultadoDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

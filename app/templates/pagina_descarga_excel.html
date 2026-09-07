@@ -1,0 +1,38 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Descarga de Asistencia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+  <link rel="stylesheet" href="{% static 'css/descarga.css' %}">
+</head>
+
+<body>
+  <div class="container px-3" style="min-height:100vh; display:flex; align-items:center; justify-content:center;">
+    <div class="row justify-content-center w-100">
+      <div class="col-12 col-md-9 col-lg-7">
+        <div class="card hero-card p-4 text-center">
+          <span class="glow-line gl1"></span>
+          <span class="glow-line gl2"></span>
+          <div class="brand-bar mb-2"><span class="brand-pill"><img src="{% static 'img/logo-calidad.svg' %}" alt="Nakama">NAKAMA • Descargas</span></div>
+          <h2 class="title-gradient">Panel de Descarga de Asistencia</h2>
+          <p class="helper-text">Solo usuarios administradores pueden acceder a esta página.</p>
+
+          <div class="d-grid gap-3 mt-4">
+            <a href="{% url 'descargar_excel' %}" class="btn btn-success btn-lg">
+              Descargar Excel mensual por empleado y semanas
+            </a>
+            <a href="{% url 'resumen_excel' %}" class="btn btn-success btn-lg">
+              Descargar Excel de Resumen de Asistencias
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

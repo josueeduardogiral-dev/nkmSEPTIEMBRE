@@ -1,0 +1,158 @@
+:root{
+    /* Paleta corporativa: azul, blanco, amarillo y plomo (gris) */
+    --brand-primary:#0f1e52; /* azul profundo */
+    --brand-primary-dark:#1f3b8d; /* azul hover */
+    --brand-accent:#f5b301; /* amarillo CTA */
+    --brand-accent-dark:#d99c00;
+
+    --black:#1f2937; /* plomo oscuro de fondo */
+    --white:#ffffff;
+    --gray-50:#f3f4f6;
+    --gray-500:#6b7280;
+
+    --success:#10b981;
+    --danger:#ef4444;
+    --warning:#f5b301;
+    --info:#3b82f6;
+}
+
+body {
+    /* Fondo tecnológico: degradé oscuro + retícula sutil */
+    background:
+      radial-gradient(1200px 600px at -10% -20%, rgba(24,39,94,.55), transparent 60%),
+      radial-gradient(900px 500px at 120% 120%, rgba(31,59,141,.45), transparent 60%),
+      linear-gradient(135deg, var(--black) 0%, #0b1430 100%);
+    position: relative;
+    font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: #e5e7eb;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* retícula */
+body::before{
+    content:""; position: fixed; inset:0; pointer-events:none; opacity:.08;
+    background-image:
+      linear-gradient(transparent 95%, rgba(245,179,1,.45) 96%),
+      linear-gradient(90deg, transparent 95%, rgba(245,179,1,.45) 96%);
+    background-size: 22px 22px;
+}
+
+/* Hero principal */
+.hero-card{
+    position: relative;
+    overflow: hidden;
+}
+.hero-card::after{
+    content:""; position:absolute; inset:-1px; border-radius: 16px; pointer-events:none;
+    background: linear-gradient(135deg, rgba(245,179,1,.6), rgba(31,59,141,.5));
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    padding:1px;
+}
+
+/* líneas de neón decorativas */
+.glow-line{ position:absolute; height:3px; background: linear-gradient(90deg, #00b4ff, #3b82f6, #f5b301); filter: blur(0.6px); opacity:.9; }
+.gl1{ top:18px; left:-50px; width:160px; transform: rotate(-10deg); }
+.gl2{ bottom:18px; right:-50px; width:160px; transform: rotate(-10deg); }
+
+.brand-bar{ position:relative; width:100%; display:flex; justify-content:center; margin-bottom:10px; }
+.brand-pill{
+    background: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-dark));
+    color:#fff; font-weight:800; letter-spacing:.4px;
+    padding: 8px 14px; border-radius: 999px; box-shadow: 0 6px 16px rgba(0,0,0,.25);
+}
+.brand-pill img{ height:24px; width:24px; object-fit:contain; margin-right:10px; vertical-align:middle; padding:2px; border-radius:6px; background: rgba(255,255,255,.08); box-shadow: 0 0 0 2px rgba(255,255,255,.06) inset; }
+
+.title-gradient{ background: linear-gradient(90deg, #00b4ff, #3b82f6, #f5b301); -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+.qr-badge{ display:inline-flex; align-items:center; gap:8px; background: rgba(15,30,82,.08); color:#0f172a; border:1px solid rgba(15,30,82,.12); border-radius:999px; padding:6px 12px; }
+.qr-badge i{ color: var(--brand-primary-dark); }
+
+.btn-cta{ position:relative; overflow:hidden; background: linear-gradient(180deg, var(--brand-accent), var(--brand-accent-dark)); color:#0f172a; font-weight:800; border:none; border-radius: 28px; padding:12px 20px; font-size:1rem; box-shadow: 0 10px 24px rgba(245,179,1,.35); text-transform:uppercase; }
+.btn-cta:hover{ filter:brightness(1.06); color:#0b1324; }
+.btn-cta::after{ content:""; position:absolute; inset:0; background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.35) 30%, transparent 60%); transform: translateX(-100%); }
+.btn-cta:hover::after{ animation: shine 1.1s ease; }
+@keyframes shine{ to{ transform: translateX(120%); } }
+
+.helper-text{ color: var(--gray-500); font-size:.9rem; }
+
+.card {
+    background: rgba(255,255,255,.92);
+    color: #0f172a;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.35);
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    backdrop-filter: blur(8px) saturate(120%);
+    animation: fadeIn 0.6s ease;
+    max-width: 380px;
+    margin: 16px auto;
+}
+
+.form-label {
+    font-weight: bold;
+}
+
+/* Encabezado estilo "chip" morado como en el diseño */
+.header-chip {
+    background: linear-gradient(180deg, var(--brand-primary), var(--brand-primary-dark));
+    color: #fff;
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: .3px;
+    box-shadow: 0 0 0 2px rgba(245,179,1,.35), 0 10px 24px rgba(0,0,0,.25);
+    text-transform: capitalize;
+}
+
+/* Botón ENTRAR en verde corporativo */
+.btn-entrar {
+    background: linear-gradient(180deg, var(--green-500), var(--green-600));
+    border: none;
+    color: #f0fdf4;
+    font-weight: 800;
+    border-radius: 22px;
+    padding: 10px 20px;
+    font-size: .98rem;
+    box-shadow: 0 8px 18px rgba(34,197,94,.35), 0 2px 0 rgba(0,0,0,.25) inset;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+.btn-entrar:hover { filter: brightness(1.05); color:#ffffff; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Controles compactos y con foco azul */
+.form-select, .form-control { height: 36px; padding: 6px 12px; font-size: .96rem; border-radius: 10px; border-color:#cfd4da; }
+.form-select:focus, .form-control:focus { border-color: var(--brand-accent); box-shadow: 0 0 0 .2rem rgba(245,179,1,.25); background:#fff; color:#0f172a; }
+
+.select2-container--default .select2-selection--single { height: 34px; padding: 3px 10px; border-color: #cfd4da; border-radius: 8px; }
+.select2-container--default .select2-selection--single .select2-selection__arrow b{ border-color: #666 transparent transparent transparent; }
+.select2-container--default .select2-results__option--highlighted[aria-selected]{ background-color: var(--brand-primary); }
+.select2-container--default .select2-selection--single:focus { border-color: var(--info); }
+
+/* Tarjeta compacta para éxito */
+.success-card { border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.15); }
+
+/* Botones y estados Bootstrap mapeados a la paleta */
+.btn-primary{ background: linear-gradient(180deg, var(--brand-primary), var(--brand-primary-dark)) !important; border-color: var(--brand-primary-dark) !important; }
+.btn-primary:hover{ filter: brightness(1.05) !important; }
+.btn-success{ background-color: var(--success) !important; border-color: var(--success) !important; }
+.btn-danger{ background-color: var(--danger) !important; border-color: var(--danger) !important; }
+.btn-warning{ background-color: var(--warning) !important; border-color: var(--warning) !important; color:#111827 !important; }
+.btn-info{ background-color: var(--info) !important; border-color: var(--info) !important; }
+
+.alert-success{ color:#065f46; background:#ecfdf5; border-color:#d1fae5; }
+.alert-danger{ color:#7f1d1d; background:#fef2f2; border-color:#fee2e2; }
+.alert-warning{ color:#78350f; background:#fffbeb; border-color:#fde68a; }
+.alert-info{ color:#1e40af; background:#eff6ff; border-color:#bfdbfe; }
+
+.text-muted{ color: var(--gray-500) !important; }
